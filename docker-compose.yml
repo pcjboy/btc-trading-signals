@@ -1,0 +1,86 @@
+version: '3.8'
+
+services:
+  api-gateway:
+    build:
+      context: ./api-gateway
+      dockerfile: Dockerfile
+    ports:
+      - "8888:8080"
+    environment:
+      - DATA_COLLECTOR_URL=http://data-collector:8001
+      - ANALYZER_URL=http://analyzer:8002
+      - SIGNAL_GENERATOR_URL=http://signal-generator:8003
+      - PORT=8080
+    depends_on:
+      data-collector:
+        condition: service_started
+      analyzer:
+        condition: service_started
+      signal-generator:
+        condition: service_started
+    networks:
+      - btc-network
+
+  data-collector:
+    build:
+      context: ./data-collector
+      dockerfile: Dockerfile
+    ports:
+      - "8001:8001"
+    environment:
+      - PORT=8001
+    volumes:
+      - data-collector-data:/app/data
+    networks:
+      - btc-network
+
+  analyzer:
+    build:
+      context: ./analyzer
+      dockerfile: Dockerfile
+    ports:
+      - "8002:8002"
+    environment:
+      - PORT=8002
+      - DATA_COLLECTOR_URL=http://data-collector:8001
+    depends_on:
+      data-collector:
+        condition: service_started
+    networks:
+      - btc-network
+
+  signal-generator:
+    build:
+      context: ./signal-generator
+      dockerfile: Dockerfile
+    ports:
+      - "8003:8003"
+    environment:
+      - PORT=8003
+      - ANALYZER_URL=http://analyzer:8002
+      - DATA_COLLECTOR_URL=http://data-collector:8001
+    volumes:
+      - signal-generator-data:/app/data
+    depends_on:
+      analyzer:
+        condition: service_started
+      data-collector:
+        condition: service_started
+    networks:
+      - btc-network
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    networks:
+      - btc-network
+
+volumes:
+  data-collector-data:
+  signal-generator-data:
+
+networks:
+  btc-network:
+    driver: bridge
