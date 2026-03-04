@@ -6,11 +6,15 @@ services:
       context: ./api-gateway
       dockerfile: Dockerfile
     ports:
-      - "8888:8080"
+      - "18888:8080"
     environment:
       - DATA_COLLECTOR_URL=http://data-collector:8001
       - ANALYZER_URL=http://analyzer:8002
       - SIGNAL_GENERATOR_URL=http://signal-generator:8003
+      - ALPHA_MINER_URL=http://alpha-miner:8004
+      - RISK_MODEL_URL=http://risk-model:8005
+      - PORTFOLIO_OPTIMIZER_URL=http://portfolio-optimizer:8006
+      - ORDER_EXECUTOR_URL=http://order-executor:8007
       - PORT=8080
     depends_on:
       data-collector:
@@ -18,6 +22,14 @@ services:
       analyzer:
         condition: service_started
       signal-generator:
+        condition: service_started
+      alpha-miner:
+        condition: service_started
+      risk-model:
+        condition: service_started
+      portfolio-optimizer:
+        condition: service_started
+      order-executor:
         condition: service_started
     networks:
       - btc-network
@@ -27,7 +39,7 @@ services:
       context: ./data-collector
       dockerfile: Dockerfile
     ports:
-      - "8001:8001"
+      - "18001:8001"
     environment:
       - PORT=8001
     volumes:
@@ -40,7 +52,7 @@ services:
       context: ./analyzer
       dockerfile: Dockerfile
     ports:
-      - "8002:8002"
+      - "18002:8002"
     environment:
       - PORT=8002
       - DATA_COLLECTOR_URL=http://data-collector:8001
@@ -55,7 +67,7 @@ services:
       context: ./signal-generator
       dockerfile: Dockerfile
     ports:
-      - "8003:8003"
+      - "18003:8003"
     environment:
       - PORT=8003
       - ANALYZER_URL=http://analyzer:8002
@@ -66,6 +78,69 @@ services:
       analyzer:
         condition: service_started
       data-collector:
+        condition: service_started
+    networks:
+      - btc-network
+
+  alpha-miner:
+    build:
+      context: ./alpha-miner
+      dockerfile: Dockerfile
+    ports:
+      - "18004:8004"
+    environment:
+      - PORT=8004
+      - DATA_COLLECTOR_URL=http://data-collector:8001
+    depends_on:
+      data-collector:
+        condition: service_started
+    networks:
+      - btc-network
+
+  risk-model:
+    build:
+      context: ./risk-model
+      dockerfile: Dockerfile
+    ports:
+      - "18005:8005"
+    environment:
+      - PORT=8005
+      - DATA_COLLECTOR_URL=http://data-collector:8001
+    depends_on:
+      data-collector:
+        condition: service_started
+    networks:
+      - btc-network
+
+  portfolio-optimizer:
+    build:
+      context: ./portfolio-optimizer
+      dockerfile: Dockerfile
+    ports:
+      - "18006:8006"
+    environment:
+      - PORT=8006
+      - DATA_COLLECTOR_URL=http://data-collector:8001
+    depends_on:
+      data-collector:
+        condition: service_started
+    networks:
+      - btc-network
+
+  order-executor:
+    build:
+      context: ./order-executor
+      dockerfile: Dockerfile
+    ports:
+      - "18007:8007"
+    environment:
+      - PORT=8007
+      - DATA_COLLECTOR_URL=http://data-collector:8001
+      - SIGNAL_GENERATOR_URL=http://signal-generator:8003
+    depends_on:
+      data-collector:
+        condition: service_started
+      signal-generator:
         condition: service_started
     networks:
       - btc-network

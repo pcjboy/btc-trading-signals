@@ -25,6 +25,10 @@ func main() {
 	dataCollectorURL := getEnv("DATA_COLLECTOR_URL", "http://localhost:8001")
 	analyzerURL := getEnv("ANALYZER_URL", "http://localhost:8002")
 	signalGeneratorURL := getEnv("SIGNAL_GENERATOR_URL", "http://localhost:8003")
+	alphaMinerURL := getEnv("ALPHA_MINER_URL", "http://localhost:8004")
+	riskModelURL := getEnv("RISK_MODEL_URL", "http://localhost:8005")
+	portfolioOptimizerURL := getEnv("PORTFOLIO_OPTIMIZER_URL", "http://localhost:8006")
+	orderExecutorURL := getEnv("ORDER_EXECUTOR_URL", "http://localhost:8007")
 
 	r := gin.Default()
 
@@ -42,9 +46,13 @@ func main() {
 	r.GET("/health", func(c *gin.Context) {
 		// Check all backend services
 		services := map[string]string{
-			"data_collector":   dataCollectorURL,
-			"analyzer":         analyzerURL,
-			"signal_generator": signalGeneratorURL,
+			"data_collector":      dataCollectorURL,
+			"analyzer":            analyzerURL,
+			"signal_generator":    signalGeneratorURL,
+			"alpha_miner":         alphaMinerURL,
+			"risk_model":          riskModelURL,
+			"portfolio_optimizer": portfolioOptimizerURL,
+			"order_executor":      orderExecutorURL,
 		}
 
 		serviceStatus := make(map[string]string)
@@ -233,11 +241,147 @@ func main() {
 		proxyRequest(c, url)
 	})
 
+	// ============ Alpha Miner Endpoints ============
+	r.GET("/api/v1/alpha/factors", func(c *gin.Context) {
+		symbol := c.DefaultQuery("symbol", "BTCUSDT")
+		interval := c.DefaultQuery("interval", "1h")
+
+		url := fmt.Sprintf("%s/api/v1/alpha/factors?symbol=%s&interval=%s",
+			alphaMinerURL, symbol, interval)
+
+		proxyRequest(c, url)
+	})
+
+	r.GET("/api/v1/alpha/score", func(c *gin.Context) {
+		symbol := c.DefaultQuery("symbol", "BTCUSDT")
+		interval := c.DefaultQuery("interval", "1h")
+
+		url := fmt.Sprintf("%s/api/v1/alpha/score?symbol=%s&interval=%s",
+			alphaMinerURL, symbol, interval)
+
+		proxyRequest(c, url)
+	})
+
+	r.GET("/api/v1/alpha/factor/:factor_name", func(c *gin.Context) {
+		factorName := c.Param("factor_name")
+		symbol := c.DefaultQuery("symbol", "BTCUSDT")
+		interval := c.DefaultQuery("interval", "1h")
+
+		url := fmt.Sprintf("%s/api/v1/alpha/factor/%s?symbol=%s&interval=%s",
+			alphaMinerURL, factorName, symbol, interval)
+
+		proxyRequest(c, url)
+	})
+
+	// ============ Risk Model Endpoints ============
+	r.GET("/api/v1/risk/full", func(c *gin.Context) {
+		symbol := c.DefaultQuery("symbol", "BTCUSDT")
+		interval := c.DefaultQuery("interval", "1h")
+
+		url := fmt.Sprintf("%s/api/v1/risk/full?symbol=%s&interval=%s",
+			riskModelURL, symbol, interval)
+
+		proxyRequest(c, url)
+	})
+
+	r.GET("/api/v1/risk/var", func(c *gin.Context) {
+		symbol := c.DefaultQuery("symbol", "BTCUSDT")
+		interval := c.DefaultQuery("interval", "1h")
+		confidence := c.DefaultQuery("confidence", "0.95")
+
+		url := fmt.Sprintf("%s/api/v1/risk/var?symbol=%s&interval=%s&confidence=%s",
+			riskModelURL, symbol, interval, confidence)
+
+		proxyRequest(c, url)
+	})
+
+	r.GET("/api/v1/risk/drawdown", func(c *gin.Context) {
+		symbol := c.DefaultQuery("symbol", "BTCUSDT")
+		interval := c.DefaultQuery("interval", "1h")
+
+		url := fmt.Sprintf("%s/api/v1/risk/drawdown?symbol=%s&interval=%s",
+			riskModelURL, symbol, interval)
+
+		proxyRequest(c, url)
+	})
+
+	r.GET("/api/v1/risk/performance", func(c *gin.Context) {
+		symbol := c.DefaultQuery("symbol", "BTCUSDT")
+		interval := c.DefaultQuery("interval", "1h")
+
+		url := fmt.Sprintf("%s/api/v1/risk/performance?symbol=%s&interval=%s",
+			riskModelURL, symbol, interval)
+
+		proxyRequest(c, url)
+	})
+
+	// ============ Portfolio Optimizer Endpoints ============
+	r.GET("/api/v1/portfolio/optimize", func(c *gin.Context) {
+		symbols := c.DefaultQuery("symbols", "BTCUSDT,ETHUSDT")
+		interval := c.DefaultQuery("interval", "1h")
+		strategy := c.DefaultQuery("strategy", "max_sharpe")
+
+		url := fmt.Sprintf("%s/api/v1/portfolio/optimize?symbols=%s&interval=%s&strategy=%s",
+			portfolioOptimizerURL, symbols, interval, strategy)
+
+		proxyRequest(c, url)
+	})
+
+	r.GET("/api/v1/portfolio/allocation", func(c *gin.Context) {
+		symbols := c.DefaultQuery("symbols", "BTCUSDT,ETHUSDT")
+		interval := c.DefaultQuery("interval", "1h")
+		capital := c.DefaultQuery("total_capital", "10000")
+
+		url := fmt.Sprintf("%s/api/v1/portfolio/allocation?symbols=%s&interval=%s&total_capital=%s",
+			portfolioOptimizerURL, symbols, interval, capital)
+
+		proxyRequest(c, url)
+	})
+
+	r.GET("/api/v1/portfolio/efficient-frontier", func(c *gin.Context) {
+		symbols := c.DefaultQuery("symbols", "BTCUSDT,ETHUSDT")
+		interval := c.DefaultQuery("interval", "1h")
+
+		url := fmt.Sprintf("%s/api/v1/portfolio/efficient-frontier?symbols=%s&interval=%s",
+			portfolioOptimizerURL, symbols, interval)
+
+		proxyRequest(c, url)
+	})
+
+	// ============ Order Executor Endpoints ============
+	r.GET("/api/v1/order/execute", func(c *gin.Context) {
+		symbol := c.DefaultQuery("symbol", "BTCUSDT")
+		side := c.DefaultQuery("side", "BUY")
+		orderType := c.DefaultQuery("order_type", "market")
+		quantity := c.DefaultQuery("quantity", "1")
+
+		url := fmt.Sprintf("%s/api/v1/order/execute?symbol=%s&side=%s&order_type=%s&quantity=%s",
+			orderExecutorURL, symbol, side, orderType, quantity)
+
+		proxyRequest(c, url)
+	})
+
+	r.GET("/api/v1/order/estimate", func(c *gin.Context) {
+		symbol := c.DefaultQuery("symbol", "BTCUSDT")
+		orderType := c.DefaultQuery("order_type", "twap")
+		quantity := c.DefaultQuery("quantity", "1")
+
+		url := fmt.Sprintf("%s/api/v1/order/estimate?symbol=%s&order_type=%s&quantity=%s",
+			orderExecutorURL, symbol, orderType, quantity)
+
+		proxyRequest(c, url)
+	})
+
+	r.GET("/api/v1/order/strategies", func(c *gin.Context) {
+		url := fmt.Sprintf("%s/api/v1/order/strategies", orderExecutorURL)
+		proxyRequest(c, url)
+	})
+
 	// Start server
 	port := getEnv("PORT", "8080")
 	log.Printf("Starting API Gateway on port %s", port)
-	log.Printf("Backend services: DataCollector=%s, Analyzer=%s, SignalGenerator=%s",
-		dataCollectorURL, analyzerURL, signalGeneratorURL)
+	log.Printf("Backend services: DataCollector=%s, Analyzer=%s, SignalGenerator=%s, AlphaMiner=%s, RiskModel=%s, PortfolioOptimizer=%s, OrderExecutor=%s",
+		dataCollectorURL, analyzerURL, signalGeneratorURL, alphaMinerURL, riskModelURL, portfolioOptimizerURL, orderExecutorURL)
 
 	if err := r.Run(":" + port); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
